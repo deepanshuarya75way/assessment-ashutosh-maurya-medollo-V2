@@ -1,0 +1,25 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7E22CE"/>
+      <stop offset="25%" stop-color="#A21CAF"/>
+      <stop offset="50%" stop-color="#C026D3"/>
+      <stop offset="75%" stop-color="#E879F9"/>
+      <stop offset="100%" stop-color="#F0ABFC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Centered Gradient "M" -->
+  <text
+    x="50%"
+    y="55%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="Poppins, sans-serif"
+    font-size="110"
+    font-weight="800"
+    fill="url(#grad)">
+    M
+  </text>
+</svg>
