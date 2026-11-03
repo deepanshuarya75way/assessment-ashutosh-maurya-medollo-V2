@@ -407,7 +407,7 @@ const updateDosageSchedule = async (req, res) => {
       });
     }
     const validateSlots = (dosageSchedule.slots || []).map((s) => ({
-      slotName: s.slotName || 'Morning',
+      slotName: s.slotName || 'morning',
       label: s.label || s.slotName || 'Morning',
       pillCount: Number(s.pillCount) > 0 ? Number(s.pillCount) : 1,
       foodRequirement: s.foodRequirement || 'after_food',

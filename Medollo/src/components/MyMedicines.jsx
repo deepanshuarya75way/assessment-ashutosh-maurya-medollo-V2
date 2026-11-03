@@ -1,19 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  PlusIcon, 
-  TrashIcon, 
-  PencilIcon, 
+import {
+  PlusIcon,
+  TrashIcon,
+  PencilIcon,
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  HeartIcon
+  HeartIcon,
+  CalendarDaysIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
+import DosageScheduleModal from './DosageScheduleModal';
+const FOODS_OPTIONS = [{ value: 'after_food', label: 'After food' },
+{ value: 'before_food', label: 'Before food' }, { value: 'with_food', label: 'With food' }, { value: 'empty_stomach', label: 'Empty stomach' }, { value: 'no_restriction', label: 'No restriction' }
+];
 
-const MyMedicines = () => {
+
+const MyMedicines = ({ onOpenAgenda }) => {
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scheduleModalMed, setScheduleModalMed] = useState(null);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
   const [stats, setStats] = useState({});
@@ -21,57 +30,60 @@ const MyMedicines = () => {
   const { isLoggedIn } = useCart();
 
   // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    brand_name: '',
-    dosage: '',
-    quantity: 1,
-    price: 0,
-    image: '',
-    description: '',
-    notes: '',
-    reminder: {
-      enabled: false,
-      time: '',
-      frequency: 'daily'
+  const [form, setForm] = useState({
+    name: '', brand_name: '', dosage: '', quantity: 1,
+    price: 0, image: '', description: '', notes: '', dosageSchedule: {
+      enabled: true, paused: false, slots: [{ slotName: 'morning', label: 'Morning', time: '08:00', pillCount: 1, foodRequirement: 'after_food' }]
     }
   });
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchMedicines();
-      fetchStats();
-    }
-  }, [isLoggedIn]);
+  const token = localStorage.getItem('token');
+  const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL;
 
-  const fetchMedicines = async () => {
+  const fetchMedicines = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
       }
-      
-      const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/user-medicines`, {
+
+      const response = await fetch(`${backendUrl}/api/user-medicines`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setMedicines(data.data || []);
-      } else if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.reload();
       }
     } catch (error) {
       console.error('Error fetching medicines:', error);
     } finally {
       setLoading(false);
+    }
+  }, [token, backendUrl]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchMedicines();
+    }
+  }, [isLoggedIn, fetchMedicines]);
+
+  const handleTogglePause = async (med) => {
+    try {
+      const res = await fetch(`${backendUrl}/api/dosage-schedule/${med._id}/pause`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ paused: !med.dpsageSchedule?.paused }),
+      });
+      if (res.ok) fetchMedicines();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -79,14 +91,14 @@ const MyMedicines = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      
+
       const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/user-medicines/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setStats(data.data || {});
@@ -104,13 +116,13 @@ const MyMedicines = () => {
         setError('Please log in to add medicines');
         return;
       }
-      
-      const url = editingMedicine 
+
+      const url = editingMedicine
         ? `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/user-medicines/${editingMedicine._id}`
         : `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/user-medicines`;
-      
+
       const method = editingMedicine ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -154,14 +166,9 @@ const MyMedicines = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to remove this medicine?')) return;
-    
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Please log in to manage medicines');
-        return;
-      }
-      
+
       const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/user-medicines/${id}`, {
         method: 'DELETE',
         headers: {
@@ -172,14 +179,6 @@ const MyMedicines = () => {
 
       if (response.ok) {
         await fetchMedicines();
-        await fetchStats();
-      } else if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.reload();
-      } else {
-        const data = await response.json();
-        setError(data.message || 'Failed to delete medicine');
       }
     } catch (error) {
       console.error('Error deleting medicine:', error);
@@ -187,21 +186,60 @@ const MyMedicines = () => {
     }
   };
 
-  const handleEdit = (medicine) => {
-    setEditingMedicine(medicine);
+  const handleSaveMedicine = async (e) => {
+    e.preventDefault();
+    setError('');
+    const url = editingMedicine ? `${backendUrl}/api/user-medicines/${editingMedicine._id}` : `${backendUrl}/api/user-medicines`;
+    try {
+      const res = await fetch(url, {
+        method: editingMedicine ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          medicine: {
+            name: formData.name,
+            brand_name: formData.brand_name,
+            dosage: formData.dosage,
+            quantity: formData.quantity,
+            price: formData.price,
+            image: formData.image,
+            description: formData.description
+          },
+          notes: formData.notes,
+          dosageSchedule: formData.dosageSchedule
+        }),
+      });
+      if (response.ok) {
+        await fetchMedicines();
+        setShowAddForm(false);
+        setEditingMedicine(null);
+      } else {
+        const d = await res.json();
+        setError(d.message || 'Error saving medidicne');
+      }
+    } catch {
+      setError('Network Error');
+    }
+  }
+
+  const openEdit = (med) => {
+    setEditingMedicine(med);
     setFormData({
-      name: medicine.medicine.name,
-      brand_name: medicine.medicine.brand_name,
-      dosage: medicine.medicine.dosage,
-      quantity: medicine.medicine.quantity,
-      price: medicine.medicine.price,
-      image: medicine.medicine.image,
-      description: medicine.medicine.description,
-      notes: medicine.notes,
-      reminder: medicine.reminder
+      name: med.medicine.name,
+      brand_name: med.medicine.brand_name,
+      dosage: med.medicine.dosage,
+      quantity: med.medicine.quantity,
+      price: med.medicine.price,
+      image: med.medicine.image,
+      description: med.medicine.description,
+      notes: med.notes,
+      dosageSchedule: med.dosageSchedule?.slots?.length ? med.dosageSchedule : { enabled: true, paused: false, slots: [{ slotName: 'morning', label: 'Morning', time: '08:00', pillCount: 1, foodRequirement: 'after_food' }] },
     });
     setShowAddForm(true);
   };
+
 
   const resetForm = () => {
     setFormData({
@@ -246,17 +284,27 @@ const MyMedicines = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Medicines</h2>
-          <p className="text-gray-600">Manage your personal medicine collection</p>
+          <p className="text-gray-600">Configure daily dosage schedules, intake times, and reminders</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span>Add Medicine</span>
-        </motion.button>
+        <div className="flex items-center space-x-2">
+          {onOpenAgenda && (
+            <button onClick={onOpenAgenda} className="flex items-center space-x-1 px-3 py-1.5 text-xs font-bold text-primary bg-pink-50 border border-primary/20 rounded-xl hover:bg-pink-100">
+              <CalendarDaysIcon className='h-4 w-4' /><span>Daily Agenda</span>
+            </button>
+          )}
+          <button onClick={() => {
+            setEditingMedicine(null); setFormData({
+              name: '', brand_name: '', dosage: '', quantity: 1, price: 0, image: '', description: '', notes: '', dosageSchedule: {
+                enabled: true, paused: false, slots: [{ slotName: 'morning', label: 'Morning', time: '08:00', pillCount: 1, foodRequirement: 'after_food' }]
+              }
+            }); setShowAddForm(true);
+          }} 
+          className='flex items-center space-x-1 px-3 py-1.5 text-xs font-bold text-white bg-primary rounded-xl hover:bg-primary/90 shadow-sm'>
+            <PlusIcon className="h-5 w-5" />
+            <span>Add Medicine</span>
+          </button>
+
+        </div>
       </div>
 
       {/* Error Message */}
@@ -278,55 +326,19 @@ const MyMedicines = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm p-6"
-        >
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <HeartIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Medicines</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalMedicines || 0}</p>
-            </div>
-          </div>
-        </motion.div>
+       <div className='bg-white p-4 rounded-2xl border border-gray-200 text-center'>
+        <p className='text-[10px] uppercase font-bold text-gray-400'>Total in cabinate</p>
+        <p className='text-xl font-black text-gray-900 mt-1'>{medicines.length}</p>
+       </div>
+       <div className='bg-white p-4 rounded-2xl border border-gray-200 text-center'>
+        <p className='text-[10px] uppercase font-bold text-emerald-500'>Active</p>
+        <p className='text-xl font-black text-emrald-600 mt-1'>{medicines.filter((m)=> m.dosageSchedule?.enabled && !m.dosageSchedule?.paused).length}</p>
+       </div>
+       <div className='bg-white p-4 rounded-2xl border border-gray-200 text-center'>
+        <p className='text-[10px] uppercase font-bold text-blue-400'>Scheduled</p>
+        <p className='text-xl font-black text-blue-600 mt-1'>{medicines.filter((m)=> m.dosageSchedule?.enabled && !m.dosageSchedule?.paused).length}</p>
+       </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg shadow-sm p-6"
-        >
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircleIcon className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeMedicines || 0}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg shadow-sm p-6"
-        >
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completedMedicines || 0}</p>
-            </div>
-          </div>
-        </motion.div>
       </div>
 
       {/* Add/Edit Form */}
@@ -577,7 +589,7 @@ const MyMedicines = () => {
                         className="w-16 h-16 object-cover rounded-lg"
                       />
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
@@ -595,7 +607,7 @@ const MyMedicines = () => {
                             </p>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-bold text-primary">
                             ₹{medicine.medicine.price}
@@ -605,13 +617,13 @@ const MyMedicines = () => {
                           </span>
                         </div>
                       </div>
-                      
+
                       {medicine.notes && (
                         <p className="mt-2 text-sm text-gray-600">
                           <strong>Notes:</strong> {medicine.notes}
                         </p>
                       )}
-                      
+
                       {medicine.reminder.enabled && (
                         <div className="mt-2 flex items-center text-sm text-blue-600">
                           <ClockIcon className="h-4 w-4 mr-1" />
@@ -621,7 +633,7 @@ const MyMedicines = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -631,7 +643,7 @@ const MyMedicines = () => {
                       >
                         <PencilIcon className="h-5 w-5" />
                       </motion.button>
-                      
+
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}

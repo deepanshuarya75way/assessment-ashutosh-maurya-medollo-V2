@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['dice-candy-inclusive-banners.trycloudflare.com'],
     port: 3000,
     strictPort: false,
     open: true,

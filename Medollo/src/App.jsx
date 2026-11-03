@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
 // Layouts
@@ -91,7 +91,8 @@ function App() {
 
               {/* User Account */}
               <Route path="profile" element={<ProfilePage />} />
-
+              <Route path="dosage-schedule" element={<Navigate to = "/profile?tab=agenda" repace />} />
+              <Route path="agenda" element={<Navigate to="/profile?tab=agenda" replace/>} />
               {/* Vendor Page  */}
               <Route path="vendors" element={<VendorPage />} />
               <Route path="vendor-dashboard" element={<VendorDashboard />} />

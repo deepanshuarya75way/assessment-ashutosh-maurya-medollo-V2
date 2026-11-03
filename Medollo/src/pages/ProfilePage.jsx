@@ -17,6 +17,7 @@ import {
 import PageTransition from '../components/ui/PageTransition';
 import { useCart } from '../context/CartContext';
 import MyMedicines from '../components/MyMedicines';
+import DailyDosageAgenda from '../components/DailyDosageAgenda';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['profile', 'orders', 'settings', 'medicines'].includes(tab)) {
+    if (tab && ['agenda','profile', 'orders', 'settings', 'medicines'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [location]);
@@ -415,6 +416,15 @@ const ProfilePage = () => {
                   Order History
                 </button>
                 <button
+                onClick={() => setActiveTab('agenda')}
+                  className={`py-4 px-6 flex items-center font-medium text-sm border-b-2 whitespace-nowrap ${
+                    activeTab === 'agenda'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}>
+                    Daily Agenda & Reminders
+                </button>
+                <button
                   onClick={() => setActiveTab('medicines')}
                   className={`py-4 px-6 flex items-center font-medium text-sm border-b-2 whitespace-nowrap ${
                     activeTab === 'medicines'
@@ -572,6 +582,16 @@ const ProfilePage = () => {
                   )}
                 </motion.div>
               )}
+
+              {activeTab === 'agenda' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <DailyDosageAgenda onNavigateToCavinate={()=> setActiveTab('medicines')} />
+                </motion.div>
+              )}
               
               {/* My Medicines Tab */}
               {activeTab === 'medicines' && (
@@ -580,7 +600,7 @@ const ProfilePage = () => {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <MyMedicines />
+                  <MyMedicines onOpenAgenda={()=> setActiveTab('agenda')} />
                 </motion.div>
               )}
               

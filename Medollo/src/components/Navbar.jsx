@@ -320,6 +320,12 @@ const Navbar = () => {
                         >
                           Profile
                         </Link>
+                        <Link to="/profile?tab=agenda"
+                        onClick={()=> setUserDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm text-primary font-semibold hover:bg-pink-50"
+                        >
+                          Dosage Agenda & Reminders
+                        </Link>
                         <Link
                           to="/profile?tab=medicines"
                           onClick={() => setUserDropdownOpen(false)}
@@ -510,6 +516,12 @@ const Navbar = () => {
                         <UserIcon className="h-5 w-5" />
                         <span>Profile</span>
                       </Link>
+                      <Link to="/profile?tab=agenda"
+                        onClick={()=> setUserDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm text-primary font-semibold hover:bg-pink-50"
+                        >
+                          Dosage Agenda & Reminders
+                        </Link>
                       <Link
                         to="/profile?tab=medicines"
                         onClick={() => setIsMenuOpen(false)}
