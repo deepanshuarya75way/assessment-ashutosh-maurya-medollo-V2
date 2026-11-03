@@ -48,12 +48,12 @@ const DoseLogSchema = new mongoose.Schema({
   },
   foodRequirement: {
     type: String,
-    enum:['before_food', 'after_food', 'with_food', 'with_food','empty_stomach','no_restriction'],
+    enum:['before_food', 'after_food', 'with_food', 'empty_stomach','no_restriction'],
     default:'after_food'
   },
   status:{
     type:String,
-    enum:['pending', 'taken','skipped'],
+    enum:['pending', 'taken', 'skipped'],
     default:'pending'
   },
   takenAt:{

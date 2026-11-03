@@ -31,7 +31,7 @@ const getAgenda = async (req, res) => {
     const agendaItems = [];
     for (const med of medicines) {
       let slots = [];
-      if (med.dosageSchedule && med.dosageSchedule.enables && Array.isArray(med.dosageSchedule.slots)) {
+      if (med.dosageSchedule && med.dosageSchedule.enabled && Array.isArray(med.dosageSchedule.slots)) {
         slots = med.dosageSchedule.slots;
       } else if (med.reminder && med.reminder.enabled && med.reminder.time) {
         slots = [
@@ -192,7 +192,7 @@ const logDose = async (req, res) => {
 
     const updatedLog = await DoseLog.findOneAndUpdate(
       {
-        usr: userId,
+        user: userId,
         userMedicine: userMedicineId,
         scheduledDate,
         slotName: slotName || 'morning',
@@ -257,7 +257,7 @@ const undoDoseLog = async (req, res) => {
     }
 
     if (log.status === 'taken') {
-      await UserMedicine.findByIdANdUpdate(log.userMedicine, {
+      await UserMedicine.findByIdAndUpdate(log.userMedicine, {
         $inc: { 'medicine.quantity': log.pillCount || 1 },
       });
     }
