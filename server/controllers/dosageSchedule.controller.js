@@ -248,7 +248,7 @@ const undoDoseLog = async (req, res) => {
     const userId = req.user._id || req.user.id;
     const { logId } = req.params;
 
-    const log = await DoseLogfindOne({ _id: logId, user: userId })
+    const log = await DoseLog.findOne({ _id: logId, user: userId })
     if (!log) {
       return res.status(404).json({
         success: false,
