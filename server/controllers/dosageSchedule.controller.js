@@ -312,7 +312,7 @@ const getAdherenceStats = async (req, res) => {
 
       const totalScheduled = Math.max(dailyExpectedDoses, taken + skipped + pendingLogged);
       const pending = Math.max(0, totalScheduled - taken - skipped);
-      const compliancePercentage = totalScheduled > 0 ? MAth.round((taken / totalScheduled) * 100) : 100;
+      const compliancePercentage = totalScheduled > 0 ? Math.round((taken / totalScheduled) * 100) : 100;
 
       days.push({
         date: dateStr,
