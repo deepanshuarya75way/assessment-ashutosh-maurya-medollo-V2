@@ -28,7 +28,7 @@ router.get('/', protect, async (req, res) => {
 // Add a new medicine to user's list
 router.post('/', protect, async (req, res) => {
   try {
-    const { medicine, notes, reminder } = req.body;
+    const { medicine, notes, reminder, dosageSchedule } = req.body;
     
     // Check if medicine already exists for this user
     const existingMedicine = await UserMedicine.findOne({
@@ -48,7 +48,8 @@ router.post('/', protect, async (req, res) => {
       user: req.user.id,
       medicine,
       notes,
-      reminder: reminder || { enabled: false }
+      reminder: reminder || { enabled: false },
+      dosageSchedule: dosageSchedule || {enabled: false, slots: []}
     });
     
     await userMedicine.save();
@@ -78,6 +79,7 @@ router.put('/:id', protect, async (req, res) => {
         $set: {
           ...(notes !== undefined && { notes }),
           ...(reminder !== undefined && { reminder }),
+          ...(dosageSchedule!==undefined && {dosageSchedule}),
           ...(status !== undefined && { status }),
           ...(quantity !== undefined && { 'medicine.quantity': quantity })
         }

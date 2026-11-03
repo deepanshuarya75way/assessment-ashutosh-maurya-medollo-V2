@@ -24,7 +24,7 @@ const UserMedicineSchema = new mongoose.Schema(
       quantity: {
         type: Number,
         required: true,
-        min: 1,
+        min: 0,
       },
       price: {
         type: Number,
@@ -57,6 +57,62 @@ const UserMedicineSchema = new mongoose.Schema(
         enum: ['daily', 'weekly', 'monthly'],
         default: 'daily',
       },
+    },
+    dosageSchedule: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      paused: {
+        type: Boolean,
+        default: false,
+      },
+      slots: [
+        {
+          slotName: {
+            type: String,
+            enum: ['morning', 'afternoon', 'evening', 'bedtime', 'custom'],
+            default: 'morning',
+          },
+          label: {
+            type: String,
+            default: 'Morning',
+          },
+          time: {
+            type: String,
+            default: 'Morning',
+          },
+          time: {
+            type: String,
+            default: '08:00',
+          },
+          pillCount: {
+            type: Number,
+            default: 1,
+            min: 0.25,
+          },
+          foodRequirement: {
+            type: String,
+            enum: ['before_food', 'after_food', 'with_food', 'with_food', 'empty_stomach', 'no_restriction'],
+            default: 'after_food'
+          },
+          instructions: {
+            type: String,
+            default: '',
+          },
+          paused: {
+            type: Boolean,
+            default: false,
+          },
+          startDate: {
+            type: Date,
+            default: Date.now,
+          }, 
+          endDate: {
+            type: Date,
+          }
+        }
+      ]
     },
     status: {
       type: String,

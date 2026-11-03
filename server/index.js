@@ -10,7 +10,7 @@ const userRoutes = require("./routes/user.routes");
 const userMedicineRoutes = require("./routes/userMedicine.routes");
 const vendorRoutes = require("./routes/vendor.routes.js");
 const orderRoutes = require("./routes/order.routes");
-
+const dosageScheduleRoutes = require("./routes/dosageSchedule.routes.js");
 const { connectDB } = require("./config/db");
 
 const medicineDetailsRoutes = require("./routes/medicineDetails");
@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 5002;
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
@@ -37,7 +37,7 @@ app.use("/api/user-medicines", userMedicineRoutes);
 app.use("/api/medicine-details", medicineDetailsRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/orders", orderRoutes);
-
+app.use("/api/dosage-schedule", dosageScheduleRoutes);
 // Health check route
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "Server is running" });
